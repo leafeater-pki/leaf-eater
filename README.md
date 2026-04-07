@@ -32,3 +32,31 @@ Apache 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 Phase 0: scaffold complete, compiles, no rules.
 Phase 1: parser + 4 core rules (R001, R002, R003, R005).
 Phase 2: cosigner rules, inclusion proof verification, landmark certs.
+
+## Usage
+
+### Lint a single MTC certificate
+
+```
+$ ./leafeater testdata/valid/mtc_minimal.pem
+testdata/valid/mtc_minimal.pem: notice [MTC_R001_d02] draft-02 uses experimental OID; production OID id-alg-mtcProof not yet assigned (draft-ietf-plants-merkle-tree-certs-02 §6.1 line 1987)
+$ echo $?
+1
+```
+
+### Lint a non-MTC certificate
+
+```
+$ ./leafeater testdata/invalid/rsa_cert.pem
+testdata/invalid/rsa_cert.pem: error [MTC_R001_d02] signature algorithm OID must be id-alg-mtcProof (draft-ietf-plants-merkle-tree-certs-02 §6.1 line 1987)
+$ echo $?
+2
+```
+
+### Regenerate fixtures
+
+```
+$ make fixtures
+```
+
+Fixtures are deterministic; regeneration produces byte-identical output.

@@ -1,5 +1,5 @@
 # Binaries
-leafeater
+/leafeater
 *.exe
 *.exe~
 *.dll

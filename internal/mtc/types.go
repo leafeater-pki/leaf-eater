@@ -212,6 +212,13 @@ type Certificate struct {
 	// verifier in crypto/x509.
 	X509 *x509.Certificate
 	// Proof is the parsed MTCProof extracted from X509.Signature.
-	// Never nil in a successfully-parsed Certificate.
+	// Nil if RawSigOID is not the experimental MTC OID (i.e., the cert is
+	// not MTC-shaped); otherwise the parsed MTCProof from X509.Signature.
+	// Every rule beyond R001 MUST nil-check Proof before dereferencing.
 	Proof *MTCProof
+	// RawSigOID is the signature algorithm OID extracted directly from the
+	// DER-encoded tbsCertificate.signature field via cryptobyte. Populated
+	// for every successfully-parsed Certificate regardless of whether the
+	// cert is MTC-shaped. R001 uses this to discriminate MTC vs non-MTC.
+	RawSigOID asn1.ObjectIdentifier
 }

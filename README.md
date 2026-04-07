@@ -60,3 +60,7 @@ $ make fixtures
 ```
 
 Fixtures are deterministic; regeneration produces byte-identical output.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.

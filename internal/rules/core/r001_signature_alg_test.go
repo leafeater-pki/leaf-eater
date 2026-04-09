@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/x509"
 	"encoding/asn1"
 	"testing"
 
@@ -32,9 +33,29 @@ func TestR001_RSAOIDIsError(t *testing.T) {
 	}
 }
 
-func TestR001_AlwaysApplies(t *testing.T) {
-	r := &r001{}
-	if !r.CheckApplies(&mtc.Certificate{}) {
-		t.Error("CheckApplies should always return true in Phase 1A")
+func TestR001_NonMTC_Default_NA(t *testing.T) {
+	SetStrictR001(false)
+	rule := &r001{}
+	cert := &mtc.Certificate{X509: &x509.Certificate{}, Proof: nil}
+	if rule.CheckApplies(cert) {
+		t.Error("default should NA on non-MTC")
+	}
+}
+
+func TestR001_NonMTC_Strict_Applies(t *testing.T) {
+	SetStrictR001(true)
+	defer SetStrictR001(false)
+	rule := &r001{}
+	cert := &mtc.Certificate{X509: &x509.Certificate{}, Proof: nil}
+	if !rule.CheckApplies(cert) {
+		t.Error("strict should apply R001 on non-MTC")
+	}
+}
+
+func TestR001_NilCert_NA(t *testing.T) {
+	SetStrictR001(false)
+	rule := &r001{}
+	if rule.CheckApplies(nil) {
+		t.Error("CheckApplies should be false when cert is nil")
 	}
 }

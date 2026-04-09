@@ -8,13 +8,22 @@ import (
 	"github.com/leafeater-pki/leaf-eater/internal/rules"
 )
 
+// strictR001 controls R001's CheckApplies semantics:
+//   - false (default): R001 only runs on certs that parsed as MTC (Proof != nil)
+//   - true: R001 runs on every cert; non-MTC certs get Error severity
+var strictR001 bool
+
+// SetStrictR001 toggles whether R001 runs on non-MTC certs. main.go calls this
+// when the -strict flag is passed.
+func SetStrictR001(v bool) { strictR001 = v }
+
 // r001 checks that the wrapping X.509 certificate's signatureAlgorithm is
 // the experimental MTC OID (1.3.6.1.4.1.44363.47.0) per
 // draft-ietf-plants-merkle-tree-certs-02 line 1987.
 //
-// Phase 1A: CheckApplies always returns true; R001 is the discriminator
-// between MTC and non-MTC certs. Phase 1B may flip this to return NA on
-// non-MTC certs by default with -strict escalating to Error.
+// Phase 1B: CheckApplies returns NA on non-MTC certs by default. The -strict
+// flag (via SetStrictR001) restores Phase 1A behavior where R001 runs on every
+// cert and non-MTC certs get Error severity.
 type r001 struct{}
 
 func (r *r001) ID() string          { return "MTC_R001_d02" }
@@ -23,7 +32,15 @@ func (r *r001) Citation() string {
 	return "draft-ietf-plants-merkle-tree-certs-02 §6.1 line 1987"
 }
 
-func (r *r001) CheckApplies(_ *mtc.Certificate) bool { return true }
+func (r *r001) CheckApplies(cert *mtc.Certificate) bool {
+	if cert == nil || cert.X509 == nil {
+		return false
+	}
+	if strictR001 {
+		return true
+	}
+	return cert.Proof != nil
+}
 
 func (r *r001) Execute(cert *mtc.Certificate) rules.Finding {
 	if cert.RawSigOID.Equal(mtc.MTCProofOID) {

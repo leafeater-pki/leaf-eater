@@ -8,7 +8,7 @@ Signatures).
 
 **Authors:** [Kevin Kusion](https://github.com/thekuuzzz) and [Peter McDade](https://github.com/pmcdade).
 
-**Status:** work in progress. Phase 0 scaffold only; no rules wired up yet.
+**Status:** early development. v0.1.0-d02 ships rules R001 through R005 against draft-02, with text and JSON output, directory walks, and a deterministic fixture corpus.
 
 ## Targeted Draft
 
@@ -27,11 +27,12 @@ permissively-licensed effort targeting draft-02.
 
 Apache 2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-## Status
+## Roadmap
 
-Phase 0: scaffold complete, compiles, no rules.
-Phase 1: parser + 4 core rules (R001, R002, R003, R005).
-Phase 2: cosigner rules, inclusion proof verification, landmark certs.
+- **Phase 0** (shipped): scaffold, license, parser stubs.
+- **Phase 1A** (shipped): parser, R001 (signature algorithm OID), text reporter.
+- **Phase 1B** (shipped, v0.1.0-d02): R002 (subtree bounds), R003 (subtree alignment), R005 (serial positive), JSON reporter, directory walk, stdin, PEM chain split, severity and rule filters, strict mode.
+- **Phase 2** (planned): cosigner rules, inclusion proof verification, landmark certs, deeper MTCProof parsing.
 
 ## Usage
 

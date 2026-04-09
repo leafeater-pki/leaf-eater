@@ -105,3 +105,45 @@ func TestStdinLoader_PEM(t *testing.T) {
 		t.Errorf("stdin source tag wrong: %q", items[0].Source)
 	}
 }
+
+func TestDirLoader_PerFileErrorContinues(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root, chmod 000 does not restrict")
+	}
+	dir := t.TempDir()
+	badPath := filepath.Join(dir, "bad.pem")
+	goodPath := filepath.Join(dir, "good.pem")
+	pemContent := []byte("-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n")
+	if err := os.WriteFile(badPath, pemContent, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(goodPath, pemContent, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(badPath, 0000); err != nil {
+		t.Fatal(err)
+	}
+	// Restore permissions so t.TempDir() cleanup can delete the file.
+	defer os.Chmod(badPath, 0644)
+
+	var items []Item
+	for item := range DirLoader(dir).Load(context.Background()) {
+		items = append(items, item)
+	}
+
+	var goodSeen, errSeen bool
+	for _, it := range items {
+		if it.Err != nil && strings.Contains(it.Source, "bad.pem") {
+			errSeen = true
+		}
+		if it.Err == nil && strings.Contains(it.Source, "good.pem") {
+			goodSeen = true
+		}
+	}
+	if !errSeen {
+		t.Error("expected an error item for bad.pem")
+	}
+	if !goodSeen {
+		t.Error("expected good.pem to still be emitted despite bad.pem error")
+	}
+}

@@ -56,7 +56,7 @@ converted to Fatal findings so one bad rule cannot crash the linter.
 Phase 1B ships five fixtures:
 
 - `testdata/valid/mtc_minimal.pem`: passes all rules
-- `testdata/invalid/rsa_cert.pem`: non-MTC (R001 NA in default, Error in strict)
+- `testdata/invalid/ed25519_cert.pem`: non-MTC (R001 NA in default, Error in strict)
 - `testdata/invalid/r002_start_ge_end.pem`: R002 violation
 - `testdata/invalid/r003_misaligned_start.pem`: R003 violation
 - `testdata/invalid/r005_zero_serial.pem`: R005 violation

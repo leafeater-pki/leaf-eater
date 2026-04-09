@@ -93,7 +93,7 @@ By default, non-MTC certificates cause R001 to return NA. Pass `-strict`
 to force R001 to Error on non-MTC input:
 
 ```
-leafeater -strict rsa_cert.pem   # R001 Error instead of NA
+leafeater -strict ed25519_cert.pem   # R001 Error instead of NA
 ```
 
 ### Exit codes

@@ -28,8 +28,8 @@ func TestParseCertificate_ValidMTCFixture(t *testing.T) {
 	}
 }
 
-func TestParseCertificate_InvalidRSAFixture(t *testing.T) {
-	path := filepath.Join("..", "..", "testdata", "invalid", "rsa_cert.pem")
+func TestParseCertificate_NonMTCFixture(t *testing.T) {
+	path := filepath.Join("..", "..", "testdata", "invalid", "ed25519_cert.pem")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
@@ -41,8 +41,8 @@ func TestParseCertificate_InvalidRSAFixture(t *testing.T) {
 	if cert.Proof != nil {
 		t.Error("Proof should be nil for non-MTC cert")
 	}
-	if cert.RawSigOID.String() != "1.2.840.113549.1.1.11" {
-		t.Errorf("RawSigOID: got %s, want 1.2.840.113549.1.1.11", cert.RawSigOID)
+	if cert.RawSigOID.String() != "1.3.101.112" {
+		t.Errorf("RawSigOID: got %s, want 1.3.101.112", cert.RawSigOID)
 	}
 }
 

@@ -25,8 +25,8 @@ func TestRun_ValidMTCFixture(t *testing.T) {
 // Phase 1B: R001 CheckApplies returns false on non-MTC certs by default
 // (parent spec §8), so this case is now NA across the board (exit 0). The
 // -strict companion below exercises the flipped semantics.
-func TestRun_InvalidRSAFixture(t *testing.T) {
-	path := filepath.Join("..", "..", "testdata", "invalid", "rsa_cert.pem")
+func TestRun_NonMTCFixture(t *testing.T) {
+	path := filepath.Join("..", "..", "testdata", "invalid", "ed25519_cert.pem")
 	var stdout, stderr bytes.Buffer
 	code := runWith([]string{path}, &stdout, &stderr)
 	if code != 0 {
@@ -37,12 +37,12 @@ func TestRun_InvalidRSAFixture(t *testing.T) {
 // Strict mode: R001 fires Error on non-MTC certs. Companion to the default
 // test; guards the plumbing from -strict through core.SetStrictR001 to R001's
 // CheckApplies.
-func TestRun_InvalidRSAFixture_Strict(t *testing.T) {
+func TestRun_NonMTCFixture_Strict(t *testing.T) {
 	// Belt-and-suspenders: reset at the end in case run() leaves the package
 	// state dirty (it shouldn't, but we own the state here).
 	defer core.SetStrictR001(false)
 
-	path := filepath.Join("..", "..", "testdata", "invalid", "rsa_cert.pem")
+	path := filepath.Join("..", "..", "testdata", "invalid", "ed25519_cert.pem")
 	var stdout, stderr bytes.Buffer
 	code := runWith([]string{"-strict", path}, &stdout, &stderr)
 	if code != 2 {

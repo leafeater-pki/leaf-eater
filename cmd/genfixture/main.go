@@ -1,8 +1,8 @@
 // genfixture builds the Phase 1A test fixtures from scratch, deterministically.
 // Outputs:
 //
-//	testdata/valid/mtc_minimal.pem   hand-crafted MTC cert (cryptobyte)
-//	testdata/invalid/rsa_cert.pem    self-signed RSA-SHA256 cert (crypto/x509)
+//	testdata/valid/mtc_minimal.pem       hand-crafted MTC cert (cryptobyte)
+//	testdata/invalid/ed25519_cert.pem    self-signed Ed25519 cert (crypto/x509)
 //
 // Apache 2.0 clean. No external dependencies beyond golang.org/x/crypto.
 package main
@@ -10,7 +10,6 @@ package main
 import (
 	"bytes"
 	"crypto/ed25519"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -76,14 +75,21 @@ func buildMTCProofBytes(start, end uint64) []byte {
 	return out
 }
 
-// buildRSACert builds a self-signed sha256WithRSAEncryption cert using a
-// deterministic random reader. Used as an invalid fixture: R001 should
-// reject it because the signature algorithm OID is not MTCProofOID.
-func buildRSACert() ([]byte, error) {
-	rng := &detReader{seed: []byte("leafeater-rsa-seed-v1")}
-	key, err := rsa.GenerateKey(rng, 2048)
+// buildEd25519Cert builds a self-signed Ed25519 cert using a deterministic
+// seeded key. Used as the non-MTC invalid fixture: R001 should classify it
+// as NA in default mode and Error in strict mode, because the signature
+// algorithm OID is Ed25519 (1.3.101.112), not the experimental MTC OID.
+//
+// Rationale for Ed25519 over RSA: as of Go 1.26, crypto/rsa.GenerateKey
+// applies FIPS 140-3 blinding that bypasses the caller-supplied io.Reader,
+// so an RSA-based fixture is no longer deterministic across regenerations.
+// crypto/ed25519 still respects its supplied reader, matching the pattern
+// already used for mtc_minimal.pem.
+func buildEd25519Cert() ([]byte, error) {
+	rng := &detReader{seed: []byte("leafeater-ed25519-seed-v1")}
+	_, priv, err := ed25519.GenerateKey(rng)
 	if err != nil {
-		return nil, fmt.Errorf("rsa.GenerateKey: %w", err)
+		return nil, fmt.Errorf("ed25519.GenerateKey: %w", err)
 	}
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
@@ -92,7 +98,10 @@ func buildRSACert() ([]byte, error) {
 		NotBefore:    fixedNotBefore,
 		NotAfter:     fixedNotAfter,
 	}
-	der, err := x509.CreateCertificate(rng, tmpl, tmpl, &key.PublicKey, key)
+	// Ed25519 signing is deterministic and ignores the rand argument, but
+	// x509.CreateCertificate may still read from it for other purposes, so
+	// we pass the same deterministic reader for reproducibility.
+	der, err := x509.CreateCertificate(rng, tmpl, tmpl, priv.Public(), priv)
 	if err != nil {
 		return nil, fmt.Errorf("x509.CreateCertificate: %w", err)
 	}
@@ -240,9 +249,9 @@ func main() {
 }
 
 func run() error {
-	rsaPEM, err := buildRSACert()
+	edPEM, err := buildEd25519Cert()
 	if err != nil {
-		return fmt.Errorf("rsa: %w", err)
+		return fmt.Errorf("ed25519: %w", err)
 	}
 	mtcPEM, err := buildMTCCert()
 	if err != nil {
@@ -257,7 +266,7 @@ func run() error {
 	if err := os.WriteFile(filepath.Join("testdata", "valid", "mtc_minimal.pem"), mtcPEM, 0o644); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join("testdata", "invalid", "rsa_cert.pem"), rsaPEM, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join("testdata", "invalid", "ed25519_cert.pem"), edPEM, 0o644); err != nil {
 		return err
 	}
 

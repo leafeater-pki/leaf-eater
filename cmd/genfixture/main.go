@@ -1,8 +1,8 @@
 // genfixture builds the Phase 1A test fixtures from scratch, deterministically.
 // Outputs:
 //
-//	testdata/valid/mtc_minimal.pem   — hand-crafted MTC cert (cryptobyte)
-//	testdata/invalid/rsa_cert.pem    — self-signed RSA-SHA256 cert (crypto/x509)
+//	testdata/valid/mtc_minimal.pem   hand-crafted MTC cert (cryptobyte)
+//	testdata/invalid/rsa_cert.pem    self-signed RSA-SHA256 cert (crypto/x509)
 //
 // Apache 2.0 clean. No external dependencies beyond golang.org/x/crypto.
 package main
@@ -137,22 +137,20 @@ func addCommonNameRDN(b *cryptobyte.Builder, cn string) {
 // Delegates to buildMTCCertWith with serial=1 and the minimal proof so the
 // byte output is identical to the original Phase 1A fixture.
 func buildMTCCert() ([]byte, error) {
-	return buildMTCCertWith(1, minimalMTCProof, true)
+	return buildMTCCertWith(1, minimalMTCProof)
 }
 
 // buildMTCCertWith builds a minimal MTC-shaped X.509 cert with a caller-
 // supplied serialNumber and signatureValue proof bytes. Used for Phase 1B
 // invalid fixtures that exercise R002, R003, and R005.
 //
-// The TBSCertificate is constructed manually via cryptobyte — we never go
-// through crypto/x509.CreateCertificate — which is what lets us emit
+// The TBSCertificate is constructed manually via cryptobyte: we never go
+// through crypto/x509.CreateCertificate, which lets us emit
 // serialNumber=0 for the R005 fixture even though RFC5280 / CreateCertificate
 // would reject it. stdlib x509.ParseCertificate DOES currently accept
 // serial=0 (it only warns), which is why the self-test round-trip still
-// passes. If skipParseSelfTest is true, the final x509.ParseCertificate
-// round-trip is skipped (reserved for future fixtures whose DER is
-// intentionally stdlib-hostile; unused today, kept as a safety valve).
-func buildMTCCertWith(serial int64, proofBytes []byte, selfTestParse bool) ([]byte, error) {
+// passes.
+func buildMTCCertWith(serial int64, proofBytes []byte) ([]byte, error) {
 	// Deterministic Ed25519 key per spec §5: fixed 32-byte seed.
 	seed := bytes.Repeat([]byte{0x42}, 32)
 	edKey := ed25519.NewKeyFromSeed(seed)
@@ -167,7 +165,7 @@ func buildMTCCertWith(serial int64, proofBytes []byte, selfTestParse bool) ([]by
 		})
 		// serialNumber INTEGER (caller-supplied)
 		b.AddASN1Int64(serial)
-		// signature AlgorithmIdentifier — MTC OID
+		// signature AlgorithmIdentifier: MTC OID
 		addMTCAlgorithmIdentifier(b)
 		// issuer Name
 		addCommonNameRDN(b, "Leaf Eater Test CA")
@@ -208,23 +206,21 @@ func buildMTCCertWith(serial int64, proofBytes []byte, selfTestParse bool) ([]by
 	}
 
 	// Self-test: round-trip through crypto/x509.ParseCertificate.
-	if selfTestParse {
-		if _, err := x509.ParseCertificate(der); err != nil {
-			return nil, fmt.Errorf("self-test parse: %w", err)
-		}
+	if _, err := x509.ParseCertificate(der); err != nil {
+		return nil, fmt.Errorf("self-test parse: %w", err)
 	}
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), nil
 }
 
 // buildR002Fixture: valid MTC cert but start == end == 5. Violates R002.
 func buildR002Fixture() ([]byte, error) {
-	return buildMTCCertWith(1, buildMTCProofBytes(5, 5), true)
+	return buildMTCCertWith(1, buildMTCProofBytes(5, 5))
 }
 
 // buildR003Fixture: start=2, end=5. Width=3, BIT_CEIL(3)=4, 2 % 4 = 2.
 // R002 passes (2 < 5); R003 fails (misaligned).
 func buildR003Fixture() ([]byte, error) {
-	return buildMTCCertWith(1, buildMTCProofBytes(2, 5), true)
+	return buildMTCCertWith(1, buildMTCProofBytes(2, 5))
 }
 
 // buildR005Fixture: serialNumber=0. Violates R005 (serial > 0 required).
@@ -233,7 +229,7 @@ func buildR003Fixture() ([]byte, error) {
 // not on the code path; stdlib ParseCertificate accepts serial=0 (warns
 // only), so the self-test round-trip still works.
 func buildR005Fixture() ([]byte, error) {
-	return buildMTCCertWith(0, buildMTCProofBytes(0, 1), true)
+	return buildMTCCertWith(0, buildMTCProofBytes(0, 1))
 }
 
 func main() {

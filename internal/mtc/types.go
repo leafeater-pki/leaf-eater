@@ -177,7 +177,7 @@ type MTCSignature struct {
 // Per draft §6.1 lines 2006-2012: start and end are the chosen subtree's
 // parameters; inclusion_proof is the subtree inclusion proof for the log
 // entry; signatures contains the chosen subtree signatures (NOTE: the
-// wire format uses the plural — this is a vector, not a single signature).
+// wire format uses the plural; this is a vector, not a single signature).
 type MTCProof struct {
 	// Start is the subtree start index (inclusive). Derived from draft line 2000.
 	// Constraint (R002): start < end (strict).

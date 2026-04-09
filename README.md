@@ -35,28 +35,82 @@ Phase 2: cosigner rules, inclusion proof verification, landmark certs.
 
 ## Usage
 
-### Lint a single MTC certificate
+### Single file
 
 ```
-$ ./leafeater testdata/valid/mtc_minimal.pem
-testdata/valid/mtc_minimal.pem: notice [MTC_R001_d02] draft-02 uses experimental OID; production OID id-alg-mtcProof not yet assigned (draft-ietf-plants-merkle-tree-certs-02 §6.1 line 1987)
-$ echo $?
-1
+leafeater cert.pem
+leafeater cert.der
 ```
 
-### Lint a non-MTC certificate
+### Directory walk
 
 ```
-$ ./leafeater testdata/invalid/rsa_cert.pem
-testdata/invalid/rsa_cert.pem: error [MTC_R001_d02] signature algorithm OID must be id-alg-mtcProof (draft-ietf-plants-merkle-tree-certs-02 §6.1 line 1987)
-$ echo $?
-2
+leafeater ./certs/
 ```
+
+Recursively processes `.pem`, `.der`, `.crt`, `.cer` files (case-insensitive).
+
+### Stdin
+
+```
+cat cert.pem | leafeater
+leafeater -
+```
+
+### PEM chains
+
+A single file or stdin blob containing multiple PEM blocks is split
+automatically; each block is tagged `<source>#<index>`.
+
+### Output formats
+
+```
+leafeater -format text cert.pem    # default
+leafeater -format json cert.pem    # JSON array of findings
+```
+
+### Severity filter
+
+Suppress findings below a threshold:
+
+```
+leafeater -severity error ./certs/   # only Error and Fatal
+leafeater -severity warn cert.pem    # Warn, Error, Fatal
+```
+
+### Rule filter
+
+Run only a subset of rules:
+
+```
+leafeater -rules MTC_R002_d02,MTC_R003_d02 cert.pem
+```
+
+### Strict mode
+
+By default, non-MTC certificates cause R001 to return NA. Pass `-strict`
+to force R001 to Error on non-MTC input:
+
+```
+leafeater -strict rsa_cert.pem   # R001 Error instead of NA
+```
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | All findings below Notice severity |
+| 1 | At least one Notice or Warn |
+| 2 | At least one Error or Fatal |
+| 3 | IO error, parse error, or usage error |
+
+See [`docs/rules.md`](docs/rules.md) for the rule catalog and
+[`docs/architecture.md`](docs/architecture.md) for the linter internals.
 
 ### Regenerate fixtures
 
 ```
-$ make fixtures
+make fixtures
 ```
 
 Fixtures are deterministic; regeneration produces byte-identical output.

@@ -5,7 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-d02-phase1a] — 2026-04-06
+## [v0.1.0-d02] - 2026-04-08
+
+### Added
+- **R002** (`MTC_R002_d02`): subtree bounds check, requires `start < end` per draft-02 §4.1 line 646.
+- **R003** (`MTC_R003_d02`): subtree alignment check, requires `start` to be a multiple of `BIT_CEIL(end - start)` per §4.1 line 648, with vacuous-pass when `start == 0`.
+- **R005** (`MTC_R005_d02`): serial number positive check, requires `serialNumber > 0` per §6.1 lines 1965-1970.
+- **JSON reporter** (`internal/reporter/json.go`): single-shot `RenderJSON` and `JSONStreamer` for multi-source streaming.
+- **Multi-input loader** (`internal/loader`): file, directory walk, stdin, PEM chain splitting.
+- **CLI filters**: working `-severity`, `-rules`, `-format json`, `-strict`.
+- **Fixtures**: `r002_start_ge_end.pem`, `r003_misaligned_start.pem`, `r005_zero_serial.pem`, all generated deterministically by `cmd/genfixture`.
+- **Documentation**: `docs/rules.md` rule catalog, `docs/architecture.md` design overview.
+
+### Changed
+- **R001** (`MTC_R001_d02`): now returns NA on non-MTC certs by default; `-strict` restores Phase 1A always-fire behavior.
+- **CLI** now supports directory walks, stdin input, and PEM chain splitting in addition to single-file mode.
+- **Version string** bumped to `v0.1.0-d02`.
+
+### Still targets
+
+`draft-ietf-plants-merkle-tree-certs-02` published 2026-03-02.
+
+## [0.1.0-d02-phase1a] - 2026-04-06
 
 First working linter slice. Parses X.509-wrapped MTC certificates, extracts the
 raw signature algorithm OID, parses the inner `MTCProof` from `signatureValue`

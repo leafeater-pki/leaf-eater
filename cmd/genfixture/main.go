@@ -241,6 +241,18 @@ func buildR005Fixture() ([]byte, error) {
 	return buildMTCCertWith(0, buildMTCProofBytes(0, 1))
 }
 
+// buildMalformedProofFixture exercises the
+// ParseCertificate -> parseMTCProof error path; signatureValue is shorter
+// than the 20-byte minimum so parseMTCProof returns *ParseError with
+// Field == "MTCProof". The proof blob is 19 zero bytes (one byte short of
+// the fixed 20-byte MTCProof header), which trips the len(b) < 20 guard
+// at the top of parseMTCProof. The outer x509.ParseCertificate self-test
+// still succeeds because the truncated payload is wrapped in a valid BIT
+// STRING.
+func buildMalformedProofFixture() ([]byte, error) {
+	return buildMTCCertWith(1, make([]byte, 19))
+}
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "genfixture:", err)
@@ -279,6 +291,7 @@ func run() error {
 		{"r002_start_ge_end.pem", buildR002Fixture},
 		{"r003_misaligned_start.pem", buildR003Fixture},
 		{"r005_zero_serial.pem", buildR005Fixture},
+		{"malformed_proof.pem", buildMalformedProofFixture},
 	}
 	for _, iv := range invalids {
 		pemBytes, err := iv.fn()
@@ -290,6 +303,6 @@ func run() error {
 		}
 	}
 
-	fmt.Println("wrote 5 fixtures (1 valid, 4 invalid)")
+	fmt.Println("wrote 6 fixtures (1 valid, 5 invalid)")
 	return nil
 }
